@@ -1,0 +1,135 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* Login page opening splash */
+.login-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at center, rgb(127 29 29 / 0.65), transparent 52%),
+    linear-gradient(145deg, #020617 0%, #450a0a 52%, #020617 100%);
+  animation: login-splash-dismiss 1.9s ease-in-out forwards;
+}
+
+.login-splash-glow {
+  position: absolute;
+  width: 22rem;
+  height: 22rem;
+  border-radius: 9999px;
+  background: rgb(250 204 21 / 0.22);
+  filter: blur(70px);
+  animation: login-splash-glow 1.2s ease-in-out infinite alternate;
+}
+
+.login-splash-title {
+  position: relative;
+  margin-top: 1.5rem;
+  padding-inline: 1rem;
+  color: #fef3c7;
+  font-size: clamp(.75rem, 2.8vw, 1rem);
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-align: center;
+  text-transform: uppercase;
+  animation: login-splash-title-in .8s .25s ease-out both;
+}
+
+.login-splash-loader {
+  position: relative;
+  width: min(48vw, 12rem);
+  height: 3px;
+  margin-top: 1.25rem;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.14);
+}
+
+.login-splash-loader span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #f59e0b, #fef08a, #f59e0b);
+  transform-origin: left;
+  animation: login-splash-progress 1.35s .15s ease-out both;
+}
+
+@keyframes login-splash-title-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes login-splash-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes login-splash-glow {
+  from { opacity: .55; transform: scale(.82); }
+  to { opacity: 1; transform: scale(1.12); }
+}
+
+@keyframes login-splash-dismiss {
+  0%, 72% { opacity: 1; visibility: visible; }
+  100% { opacity: 0; visibility: hidden; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-splash { animation-duration: .35s; }
+  .login-splash-title,
+  .login-splash-loader span,
+  .login-splash-glow { animation: none; }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Print styles for reports */
+@media print {
+  aside,
+  header,
+  footer,
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+}

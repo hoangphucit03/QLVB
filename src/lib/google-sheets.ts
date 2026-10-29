@@ -1,4 +1,4 @@
-import { google } from 'googleapis';
+﻿import { google } from 'googleapis';
 import {
   VanBanDen,
   VanBanDi,
@@ -50,7 +50,9 @@ function getGoogleSheetsClient() {
   }
 
   // Xử lý xuống dòng trong Private Key nếu được escape qua biến môi trường
-  privateKey = privateKey.replace(/\\n/g, '\n');
+  privateKey = privateKey
+    .replace(/^["']+|["']+$/g, '')
+    .replace(/\\n/g, '\n');
 
   const auth = new google.auth.JWT({
     email: clientEmail,

@@ -147,6 +147,7 @@ export function IncomingTable({
               className="w-full text-xs px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-700 font-medium"
             >
               <option value="all">Tất cả trạng thái</option>
+              <option value="Không">Không</option>
               <option value="Chưa xử lý">Chưa xử lý</option>
               <option value="Đang xử lý">Đang xử lý</option>
               <option value="Đã hoàn thành">Đã hoàn thành</option>

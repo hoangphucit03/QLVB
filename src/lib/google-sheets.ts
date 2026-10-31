@@ -1,3 +1,4 @@
+import { nextDocumentNumber, withNumberingLock } from './document-numbering';
 import { calculateStatistics } from './statistics';
 ﻿import { google } from 'googleapis';
 import {
@@ -159,12 +160,13 @@ export async function getVanBanDenList(): Promise<{ data: VanBanDen[]; isDemo: b
 /**
  * Thêm một văn bản đến mới
  */
-export async function addVanBanDen(
+async function addVanBanDenUnlocked(
   docData: Omit<VanBanDen, 'id' | 'ngay_tao' | 'ngay_cap_nhat'>
 ): Promise<{ success: boolean; data?: VanBanDen; message?: string }> {
   const currentListRes = await getVanBanDenList();
   const list = currentListRes.data;
 
+  docData = { ...docData, so_den: nextDocumentNumber(list, Number(docData.nam), 'so_den') };
   // Kiểm tra trùng số đến trong cùng một năm
   const isDuplicate = list.some(
     (item) => Number(item.nam) === Number(docData.nam) && Number(item.so_den) === Number(docData.so_den)
@@ -217,7 +219,7 @@ export async function addVanBanDen(
 /**
  * Cập nhật một văn bản đến
  */
-export async function updateVanBanDen(
+async function updateVanBanDenUnlocked(
   id: string,
   docData: Partial<VanBanDen>
 ): Promise<{ success: boolean; data?: VanBanDen; message?: string }> {
@@ -233,7 +235,7 @@ export async function updateVanBanDen(
 
   // Kiểm tra trùng số đến nếu thay đổi số đến hoặc năm
   const targetNam = docData.nam !== undefined ? Number(docData.nam) : Number(existing.nam);
-  const targetSoDen = docData.so_den !== undefined ? Number(docData.so_den) : Number(existing.so_den);
+  const targetSoDen = targetNam === Number(existing.nam) ? Number(existing.so_den) : nextDocumentNumber(list, targetNam, 'so_den');
 
   const isDuplicate = list.some(
     (item) => item.id !== id && Number(item.nam) === targetNam && Number(item.so_den) === targetSoDen
@@ -417,12 +419,13 @@ export async function getVanBanDiList(): Promise<{ data: VanBanDi[]; isDemo: boo
   }
 }
 
-export async function addVanBanDi(
+async function addVanBanDiUnlocked(
   docData: Omit<VanBanDi, 'id' | 'ngay_tao' | 'ngay_cap_nhat'>
 ): Promise<{ success: boolean; data?: VanBanDi; message?: string }> {
   const currentListRes = await getVanBanDiList();
   const list = currentListRes.data;
 
+  docData = { ...docData, so_di: docData.trang_thai === 'Đã phát hành' ? nextDocumentNumber(list, Number(docData.nam), 'so_di') : 0 };
   // Kiểm tra trùng số đi trong cùng một năm
   const isDuplicate = list.some(
     (item) => Number(docData.so_di) > 0 && Number(item.nam) === Number(docData.nam) && Number(item.so_di) === Number(docData.so_di)
@@ -472,7 +475,7 @@ export async function addVanBanDi(
   }
 }
 
-export async function updateVanBanDi(
+async function updateVanBanDiUnlocked(
   id: string,
   docData: Partial<VanBanDi>
 ): Promise<{ success: boolean; data?: VanBanDi; message?: string }> {
@@ -487,7 +490,7 @@ export async function updateVanBanDi(
   const existing = list[existingIndex];
 
   const targetNam = docData.nam !== undefined ? Number(docData.nam) : Number(existing.nam);
-  const targetSoDi = docData.so_di !== undefined ? Number(docData.so_di) : Number(existing.so_di);
+  const targetSoDi = Number(existing.so_di) > 0 && targetNam === Number(existing.nam) ? Number(existing.so_di) : (docData.trang_thai ?? existing.trang_thai) === 'Đã phát hành' ? nextDocumentNumber(list, targetNam, 'so_di') : 0;
 
   const isDuplicate = list.some(
     (item) => targetSoDi > 0 && item.id !== id && Number(item.nam) === targetNam && Number(item.so_di) === targetSoDi
@@ -810,4 +813,20 @@ export async function testGoogleConnection(): Promise<{
     systemId: SYSTEM_ID,
     error: errMsg || undefined,
   };
+}
+
+export function addVanBanDen(...args: Parameters<typeof addVanBanDenUnlocked>) {
+  return withNumberingLock(() => addVanBanDenUnlocked(...args));
+}
+
+export function addVanBanDi(...args: Parameters<typeof addVanBanDiUnlocked>) {
+  return withNumberingLock(() => addVanBanDiUnlocked(...args));
+}
+
+export function updateVanBanDen(...args: Parameters<typeof updateVanBanDenUnlocked>) {
+  return withNumberingLock(() => updateVanBanDenUnlocked(...args));
+}
+
+export function updateVanBanDi(...args: Parameters<typeof updateVanBanDiUnlocked>) {
+  return withNumberingLock(() => updateVanBanDiUnlocked(...args));
 }

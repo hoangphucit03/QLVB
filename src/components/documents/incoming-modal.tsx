@@ -30,7 +30,7 @@ export function IncomingModal({
 }: IncomingModalProps) {
   const [formData, setFormData] = useState({
     nam: 2025,
-    so_den: 1,
+    so_den: 0,
     ngay_den: '2025-01-01',
     so_ky_hieu: '',
     ngay_ban_hanh: '2025-01-01',
@@ -61,7 +61,7 @@ export function IncomingModal({
     if (initialData) {
       setFormData({
         nam: initialData.nam || currentYear,
-        so_den: initialData.so_den || 1,
+        so_den: initialData.so_den || 0,
         ngay_den: initialData.ngay_den || todayStr,
         so_ky_hieu: initialData.so_ky_hieu || '',
         ngay_ban_hanh: initialData.ngay_ban_hanh || todayStr,
@@ -82,7 +82,7 @@ export function IncomingModal({
     } else {
       setFormData({
         nam: currentYear,
-        so_den: 1,
+        so_den: 0,
         ngay_den: todayStr,
         so_ky_hieu: '',
         ngay_ban_hanh: todayStr,
@@ -111,9 +111,6 @@ export function IncomingModal({
 
     if (!formData.nam || formData.nam < 2000 || formData.nam > 2099) {
       newErrors.nam = 'Năm không hợp lệ';
-    }
-    if (!formData.so_den || Number(formData.so_den) <= 0) {
-      newErrors.so_den = 'Số đến phải là số nguyên dương';
     }
     if (!formData.ngay_den) {
       newErrors.ngay_den = 'Vui lòng chọn ngày đến';
@@ -185,13 +182,7 @@ export function IncomingModal({
     'Thanh tra Quốc phòng Tỉnh',
   ];
 
-  const defaultNguoiXuLy = categories?.nguoiXuLy || [
-    'Đ/c Nguyễn Văn Tuấn - Chỉ huy trưởng',
-    'Đ/c Trần Hữu Thắng - Chính trị viên',
-    'Đ/c Lê Hồng Nam - Phó CHT',
-    'Đ/c Hoàng Anh Đức - Cán bộ Tác huấn',
-    'Đ/c Đặng Quốc Bảo - Cán bộ Quân lực',
-  ];
+  const defaultNguoiXuLy = ['CTV', 'CTVP', 'NV', 'PV', 'Khác'];
 
   return (
     <Modal
@@ -234,14 +225,14 @@ export function IncomingModal({
             {/* Số đến (nhập thủ công) */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Số đến <span className="text-rose-500">*</span>
+                Số đến (tự động)
               </label>
               <input
                 type="number"
                 min="1"
-                value={formData.so_den}
-                onChange={(e) => setFormData({ ...formData, so_den: parseInt(e.target.value, 10) || 1 })}
-                placeholder="VD: 15"
+                value={formData.so_den || ''}
+                readOnly
+                placeholder="Tự cấp khi lưu"
                 className="w-full text-xs px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold text-blue-900"
               />
               {errors.so_den && <p className="text-[11px] text-rose-600 mt-0.5">{errors.so_den}</p>}
@@ -384,19 +375,19 @@ export function IncomingModal({
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Người chủ trì xử lý chính (không bắt buộc)
               </label>
-              <input
-                type="text"
-                list="nguoi-xu-ly-list"
+              <select
                 value={formData.nguoi_xu_ly}
                 onChange={(e) => setFormData({ ...formData, nguoi_xu_ly: e.target.value })}
-                placeholder="Chọn hoặc nhập cán bộ chủ trì"
                 className="w-full text-xs px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium text-slate-800"
-              />
-              <datalist id="nguoi-xu-ly-list">
+              >
+                <option value="">Chưa phân công</option>
+                {initialData?.nguoi_xu_ly && !defaultNguoiXuLy.includes(initialData.nguoi_xu_ly) && (
+                  <option value={initialData.nguoi_xu_ly}>{initialData.nguoi_xu_ly} (đã lưu)</option>
+                )}
                 {defaultNguoiXuLy.map((cb) => (
-                  <option key={cb} value={cb} />
+                  <option key={cb} value={cb}>{cb}</option>
                 ))}
-              </datalist>
+              </select>
               {errors.nguoi_xu_ly && <p className="text-[11px] text-rose-600 mt-0.5">{errors.nguoi_xu_ly}</p>}
             </div>
             )}
@@ -447,6 +438,7 @@ export function IncomingModal({
                 }}
                 className="w-full text-xs px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-semibold"
               >
+                <option value="Không">Không</option>
                 <option value="Chưa xử lý">Chưa xử lý</option>
                 <option value="Đang xử lý">Đang xử lý</option>
                 <option value="Đã hoàn thành">Đã hoàn thành</option>

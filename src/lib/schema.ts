@@ -10,7 +10,7 @@ export const loginSchema = z.object({
 
 export const vanBanDenSchema = z.object({
   nam: z.coerce.number().int().min(2000, 'Năm không hợp lệ').max(2099, 'Năm không hợp lệ'),
-  so_den: z.coerce.number().int().min(1, 'Số đến phải là số nguyên dương lớn hơn 0'),
+  so_den: z.coerce.number().int().min(0).default(0),
   ngay_den: z.string().min(1, 'Vui lòng chọn ngày đến'),
   so_ky_hieu: z.string().min(1, 'Vui lòng nhập số, ký hiệu văn bản'),
   ngay_ban_hanh: z.string().min(1, 'Vui lòng chọn ngày ban hành'),
@@ -21,7 +21,7 @@ export const vanBanDenSchema = z.object({
   nguoi_xu_ly: z.string().optional().default(''),
   noi_dung_chi_dao: z.string().optional().default(''),
   han_xu_ly: z.string().optional().default(''),
-  trang_thai: z.enum(['Chưa xử lý', 'Đang xử lý', 'Đã hoàn thành', 'Quá hạn']).default('Chưa xử lý'),
+  trang_thai: z.enum(['Không', 'Chưa xử lý', 'Đang xử lý', 'Đã hoàn thành', 'Quá hạn']).default('Chưa xử lý'),
   ngay_hoan_thanh: z.string().optional().default(''),
   ket_qua_xu_ly: z.string().optional().default(''),
   muc_do_uu_tien: z.enum(['Thường', 'Khẩn', 'Thượng khẩn', 'Hỏa tốc']).default('Thường'),
@@ -47,6 +47,5 @@ export const vanBanDiSchema = z.object({
   ghi_chu: z.string().optional().default(''),
 }).superRefine((doc, ctx) => {
   if (doc.trang_thai !== 'Đã phát hành') return;
-  if (doc.so_di < 1) ctx.addIssue({ code: 'custom', path: ['so_di'], message: 'Vui lòng nhập số đi khi phát hành' });
   if (!doc.so_ky_hieu) ctx.addIssue({ code: 'custom', path: ['so_ky_hieu'], message: 'Vui lòng nhập số, ký hiệu khi phát hành' });
 });

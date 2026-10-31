@@ -13,7 +13,7 @@ interface UrgentDocsProps {
 }
 
 export function UrgentDocs({ documents, onSelectDoc }: UrgentDocsProps) {
-  const pendingDocs = documents.filter((d) => d.trang_thai !== 'Đã hoàn thành');
+  const pendingDocs = documents.filter((d) => !['Không', 'Đã hoàn thành'].includes(d.trang_thai));
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-col h-full">

@@ -99,9 +99,6 @@ export function OutgoingModal({
     if (!formData.nam || formData.nam < 2000 || formData.nam > 2099) {
       newErrors.nam = 'Năm không hợp lệ';
     }
-    if (formData.trang_thai === 'Đã phát hành' && (!formData.so_di || Number(formData.so_di) <= 0)) {
-      newErrors.so_di = 'Số đi phải là số nguyên dương lớn hơn 0';
-    }
     if (!formData.ngay_phat_hanh) {
       newErrors.ngay_phat_hanh = 'Vui lòng chọn ngày phát hành';
     }
@@ -207,14 +204,14 @@ export function OutgoingModal({
             {/* Số đi (nhập thủ công) */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Số đi {formData.trang_thai === 'Đã phát hành' ? <span className="text-rose-500">*</span> : '(không bắt buộc)'}
+                Số đi (tự cấp khi phát hành)
               </label>
               <input
                 type="number"
                 min="1"
                 value={formData.so_di || ''}
-                onChange={(e) => setFormData({ ...formData, so_di: parseInt(e.target.value, 10) || 0 })}
-                placeholder="VD: 10"
+                readOnly
+                placeholder="Tự cấp khi lưu"
                 className="w-full text-xs px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold text-blue-900"
               />
               {errors.so_di && <p className="text-[11px] text-rose-600 mt-0.5">{errors.so_di}</p>}

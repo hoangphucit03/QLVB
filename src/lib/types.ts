@@ -12,7 +12,7 @@ export interface VanBanDen {
   nguoi_xu_ly: string; // Người chủ trì xử lý chính (Cán bộ Tác huấn, Quân lực, ...)
   noi_dung_chi_dao: string; // Nội dung chỉ đạo cụ thể
   han_xu_ly: string; // Hạn xử lý (YYYY-MM-DD)
-  trang_thai: 'Chưa xử lý' | 'Đang xử lý' | 'Đã hoàn thành' | 'Quá hạn' | string;
+  trang_thai: 'Không' | 'Chưa xử lý' | 'Đang xử lý' | 'Đã hoàn thành' | 'Quá hạn' | string;
   ngay_hoan_thanh: string; // Ngày hoàn thành (YYYY-MM-DD hoặc rỗng)
   ket_qua_xu_ly: string; // Kết quả xử lý (Báo cáo đã gửi, Đã lập kế hoạch, ...)
   muc_do_uu_tien: 'Thường' | 'Khẩn' | 'Thượng khẩn' | 'Hỏa tốc' | string;
@@ -66,6 +66,7 @@ export interface DashboardStats {
   tong_den: number;
   tong_di: number;
   chua_xu_ly: number;
+  khong_xu_ly: number;
   dang_xu_ly: number;
   da_hoan_thanh: number;
   qua_han: number;

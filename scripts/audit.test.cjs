@@ -50,6 +50,14 @@ test('Attachment protocols reject executable URLs', () => {
   assert.equal(vanBanDenSchema.safeParse({ ...doc, link_dinh_kem: 'javascript:alert(1)' }).success, false);
   assert.equal(vanBanDenSchema.safeParse({ ...doc, link_dinh_kem: 'https://example.com' }).success, true);
 });
+test('Status Không is accepted and excluded from pending, overdue and urgent statistics', () => {
+  const { vanBanDenSchema } = load('src/lib/schema.ts');
+  const doc = { nam: 2026, so_den: 1, ngay_den: '2026-10-31', so_ky_hieu: '1/CV', ngay_ban_hanh: '2026-10-31', co_quan_gui: 'A', loai_van_ban: 'A', trich_yeu: 'Test', trang_thai: 'Không', han_xu_ly: '2026-01-01', muc_do_uu_tien: 'Khẩn', ngay_tao: '' };
+  assert.equal(vanBanDenSchema.safeParse(doc).success, true);
+  const { stats } = load('src/lib/statistics.ts').calculateStatistics([doc], [], 2026);
+  assert.equal(stats.tong_den, 1); assert.equal(stats.khong_xu_ly, 1);
+  assert.equal(stats.chua_xu_ly, 0); assert.equal(stats.qua_han, 0); assert.equal(stats.can_xu_ly_gap, 0);
+});
 test('Sheets outage: reads reject, deletes fail, no demo success; writes use RAW', async () => {
   process.env.GOOGLE_CLIENT_EMAIL = 'test@example.com'; process.env.GOOGLE_PRIVATE_KEY = 'test';
   let failing = true, captured;
@@ -90,4 +98,32 @@ test('Login enforces process-wide request ceiling', async () => {
   for (let i = 0; i < 30; i++) assert.equal((await route.POST({ json: async () => ({}) })).status, 401);
   const blocked = await route.POST({ json: async () => ({}) });
   assert.equal(blocked.status, 429); assert.equal(blocked.headers.get('retry-after'), '60');
+});
+
+test('Automatic numbering: concurrent creates, independent years, publish draft and preserve issued numbers', async () => {
+  const email = process.env.GOOGLE_CLIENT_EMAIL, key = process.env.GOOGLE_PRIVATE_KEY;
+  delete process.env.GOOGLE_CLIENT_EMAIL; delete process.env.GOOGLE_PRIVATE_KEY;
+  try {
+    let id = 0;
+    const sheets = load('src/lib/google-sheets.ts', {
+      './utils': { generateDocumentId: () => String(++id) },
+      './mock-data': { INITIAL_MOCK_VAN_BAN_DEN: [{ id: 'old', nam: 2026, so_den: 7 }], INITIAL_MOCK_VAN_BAN_DI: [], INITIAL_MOCK_DANH_MUC: [], INITIAL_MOCK_THONG_KE: [], INITIAL_MOCK_CAU_HINH: [] },
+    });
+    const incoming = await Promise.all(Array.from({ length: 3 }, () => sheets.addVanBanDen({ nam: 2026, so_den: 999 })));
+    assert.deepEqual(incoming.map(r => r.data.so_den), [8, 9, 10]);
+    assert.equal((await sheets.addVanBanDen({ nam: 2027 })).data.so_den, 1);
+    const draft = await sheets.addVanBanDi({ nam: 2026, trang_thai: 'Dự thảo', so_di: 999 });
+    assert.equal(draft.data.so_di, 0);
+    const issued = await sheets.addVanBanDi({ nam: 2026, trang_thai: 'Đã phát hành' });
+    assert.equal(issued.data.so_di, 1);
+    const published = await sheets.updateVanBanDi(draft.data.id, { trang_thai: 'Đã phát hành' });
+    assert.equal(published.data.so_di, 2);
+    const edited = await sheets.updateVanBanDi(published.data.id, { so_di: 999 });
+    assert.equal(edited.data.so_di, 2);
+    const moved = await sheets.updateVanBanDi(published.data.id, { nam: 2027 });
+    assert.equal(moved.data.so_di, 1);
+  } finally {
+    if (email === undefined) delete process.env.GOOGLE_CLIENT_EMAIL; else process.env.GOOGLE_CLIENT_EMAIL = email;
+    if (key === undefined) delete process.env.GOOGLE_PRIVATE_KEY; else process.env.GOOGLE_PRIVATE_KEY = key;
+  }
 });

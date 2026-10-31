@@ -46,7 +46,8 @@ function ThongKeContent() {
   const assigneeCounts = breakdown.assignees;
   const totalDen = stats?.tong_den || 0;
   const daHoanThanh = stats?.da_hoan_thanh || 0;
-  const completionRate = totalDen > 0 ? Math.round((daHoanThanh / totalDen) * 100) : 0;
+  const totalRequiresProcessing = totalDen - (stats?.khong_xu_ly || 0);
+  const completionRate = totalRequiresProcessing > 0 ? Math.round((daHoanThanh / totalRequiresProcessing) * 100) : 0;
 
   return (
     <div className="space-y-6">
@@ -127,7 +128,7 @@ function ThongKeContent() {
             <TrendingUp className="w-4 h-4 text-blue-600" />
           </div>
           <div className="text-2xl font-bold text-blue-900">{completionRate}%</div>
-          <p className="text-[11px] text-slate-400 mt-1">Tiến độ thực hiện nhiệm vụ</p>
+          <p className="text-[11px] text-slate-400 mt-1">Không tính trạng thái “Không” ({stats?.khong_xu_ly || 0} văn bản)</p>
         </div>
       </div>
 

@@ -63,6 +63,7 @@ export function getDeadlineStatus(
   trangThai: string | undefined | null
 ): 'overdue' | 'due_today' | 'upcoming' | 'completed' | 'none' {
   if (trangThai === 'Đã hoàn thành') return 'completed';
+  if (trangThai === 'Không') return 'none';
   if (!hanXuLy || hanXuLy.trim() === '') return 'none';
 
   const todayStr = getTodayDateString();
@@ -84,6 +85,8 @@ export function getDeadlineStatus(
  */
 export function getStatusBadgeClass(trangThai: string): { bg: string; text: string; border: string } {
   switch (trangThai) {
+    case 'Không':
+      return { bg: 'bg-slate-100', text: 'text-slate-600', border: 'border-slate-200' };
     case 'Chưa xử lý':
       return { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' };
     case 'Đang xử lý':

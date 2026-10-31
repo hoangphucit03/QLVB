@@ -2,7 +2,17 @@ import { NextResponse } from 'next/server';
 import { loginSchema } from '@/lib/schema';
 import { verifyAdminPassword, setSessionCookie } from '@/lib/auth';
 
+// Process-wide ceiling; use a shared gateway limiter when running multiple instances.
+let windowStarted = Date.now();
+let attempts = 0;
+
 export async function POST(request: Request) {
+  const now = Date.now();
+  if (now - windowStarted >= 60_000) { windowStarted = now; attempts = 0; }
+  if (++attempts > 30) return NextResponse.json(
+    { success: false, message: 'Quá nhiều lần đăng nhập. Vui lòng thử lại sau một phút.' },
+    { status: 429, headers: { 'Retry-After': '60' } }
+  );
   try {
     const body = await request.json();
     const parseResult = loginSchema.safeParse(body);

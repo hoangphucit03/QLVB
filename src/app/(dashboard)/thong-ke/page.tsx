@@ -14,62 +14,37 @@ import {
   Inbox,
   Send,
 } from 'lucide-react';
-import { DashboardStats, VanBanDen, VanBanDi } from '@/lib/types';
-import { formatDateVN } from '@/lib/utils';
+import { DashboardStats } from '@/lib/types';
 
 function ThongKeContent() {
-  const [selectedYear, setSelectedYear] = useState<number>(2025);
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [denList, setDenList] = useState<VanBanDen[]>([]);
-  const [diList, setDiList] = useState<VanBanDi[]>([]);
+  const [breakdown, setBreakdown] = useState<{ types: Record<string, number>; agencies: Record<string, number>; assignees: Record<string, number> }>({ types: {}, agencies: {}, assignees: {} });
+  const [error, setError] = useState('');
+  const [isDemo, setIsDemo] = useState(false);
+  const currentYear = new Date().getFullYear();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const currentYear = new Date().getFullYear();
-    setSelectedYear(currentYear);
-  }, []);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
+    const controller = new AbortController();
+    setLoading(true); setError(''); setStats(null);
+    setBreakdown({ types: {}, agencies: {}, assignees: {} });
+    (async () => {
       try {
-        const [statsRes, denRes, diRes] = await Promise.all([
-          fetch(`/api/statistics?nam=${selectedYear}`).then((r) => r.json()),
-          fetch(`/api/documents/incoming?nam=${selectedYear}&limit=1000`).then((r) => r.json()),
-          fetch(`/api/documents/outgoing?nam=${selectedYear}&limit=1000`).then((r) => r.json()),
-        ]);
-
-        if (statsRes.success) setStats(statsRes.data);
-        if (denRes.success) setDenList(denRes.data || []);
-        if (diRes.success) setDiList(diRes.data || []);
+        const response = await fetch('/api/statistics?nam=' + selectedYear, { signal: controller.signal, cache: 'no-store' });
+        const result = await response.json();
+        if (!response.ok || !result.success) throw new Error(result.message || 'Không thể tải báo cáo');
+        if (!controller.signal.aborted) { setStats(result.data); setBreakdown(result.breakdown); setIsDemo(result.isDemo); }
       } catch (err) {
-        console.error('Error fetching statistics:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+        if (!controller.signal.aborted) setError(err instanceof Error ? err.message : 'Không thể tải báo cáo');
+      } finally { if (!controller.signal.aborted) setLoading(false); }
+    })();
+    return () => controller.abort();
   }, [selectedYear]);
-
-  const typeCountsDen: Record<string, number> = {};
-  denList.forEach((d) => {
-    typeCountsDen[d.loai_van_ban] = (typeCountsDen[d.loai_van_ban] || 0) + 1;
-  });
-
-  const agencyCounts: Record<string, number> = {};
-  denList.forEach((d) => {
-    agencyCounts[d.co_quan_gui] = (agencyCounts[d.co_quan_gui] || 0) + 1;
-  });
-
-  const assigneeCounts: Record<string, number> = {};
-  denList.forEach((d) => {
-    if (d.nguoi_xu_ly) {
-      assigneeCounts[d.nguoi_xu_ly] = (assigneeCounts[d.nguoi_xu_ly] || 0) + 1;
-    }
-  });
-
-  const totalDen = denList.length;
+  const typeCountsDen = breakdown.types;
+  const agencyCounts = breakdown.agencies;
+  const assigneeCounts = breakdown.assignees;
+  const totalDen = stats?.tong_den || 0;
   const daHoanThanh = stats?.da_hoan_thanh || 0;
   const completionRate = totalDen > 0 ? Math.round((daHoanThanh / totalDen) * 100) : 0;
 
@@ -99,9 +74,7 @@ function ThongKeContent() {
               onChange={(e) => setSelectedYear(parseInt(e.target.value, 10))}
               className="text-xs font-bold text-slate-800 bg-transparent focus:outline-hidden cursor-pointer"
             >
-              <option value={selectedYear}>Năm {selectedYear}</option>
-              <option value={selectedYear - 1}>Năm {selectedYear - 1}</option>
-              <option value={selectedYear - 2}>Năm {selectedYear - 2}</option>
+              {Array.from({ length: currentYear - 1999 }, (_, i) => currentYear - i).map(year => <option key={year} value={year}>Năm {year}</option>)}
             </select>
           </div>
 
@@ -115,6 +88,10 @@ function ThongKeContent() {
         </div>
       </div>
 
+      {loading && <p role="status" className="text-sm text-slate-500">Đang tải thống kê...</p>}
+      {error && <p role="alert" className="text-sm text-rose-700">{error}</p>}
+      {!loading && !error && isDemo && <p className="text-sm text-amber-700">Đang xem dữ liệu demo, không phải dữ liệu Google Sheets.</p>}
+      {!loading && !error && <>
       {/* Overview Metric Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs">
@@ -131,8 +108,8 @@ function ThongKeContent() {
             <span>Văn bản đi</span>
             <Send className="w-4 h-4 text-indigo-600" />
           </div>
-          <div className="text-2xl font-bold text-slate-800">{diList.length}</div>
-          <p className="text-[11px] text-slate-400 mt-1">Văn bản do đơn vị phát hành</p>
+          <div className="text-2xl font-bold text-slate-800">{stats?.tong_di || 0}</div>
+          <p className="text-[11px] text-slate-400 mt-1">Tất cả trạng thái văn bản đi</p>
         </div>
 
         <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs">
@@ -247,6 +224,7 @@ function ThongKeContent() {
           ))}
         </div>
       </div>
+      </>}
     </div>
   );
 }

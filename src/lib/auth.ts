@@ -1,15 +1,12 @@
-import { SignJWT, jwtVerify } from 'jose';
+import { SignJWT } from 'jose';
+import { timingSafeEqual, createHash } from 'node:crypto';
+import { SESSION_COOKIE_NAME, getSecretKey, verifySessionToken } from './session';
+export { verifySessionToken } from './session';
 import { cookies } from 'next/headers';
 import type { UserSession } from './types';
 
-const SESSION_COOKIE_NAME = 'docflow_session';
-const DEFAULT_SECRET = 'docflow_xuan_son_military_session_secret_key_2025_secure_random';
 const SESSION_DURATION_SECONDS = 7 * 24 * 60 * 60; // 7 ngày
 
-function getSecretKey(): Uint8Array {
-  const secret = process.env.SESSION_SECRET || DEFAULT_SECRET;
-  return new TextEncoder().encode(secret);
-}
 
 /**
  * Tạo token JWT ký bảo mật cho phiên đăng nhập
@@ -26,15 +23,6 @@ export async function createSessionToken(payload: UserSession): Promise<string> 
 /**
  * Giải mã và kiểm tra tính hợp lệ của token session
  */
-export async function verifySessionToken(token: string): Promise<UserSession | null> {
-  try {
-    const secretKey = getSecretKey();
-    const { payload } = await jwtVerify(token, secretKey);
-    return payload as unknown as UserSession;
-  } catch {
-    return null;
-  }
-}
 
 /**
  * Lấy phiên đăng nhập hiện tại từ Cookies
@@ -79,18 +67,10 @@ export async function clearSessionCookie(): Promise<void> {
  * Kiểm tra mật khẩu quản trị bảo mật (timing-safe)
  */
 export function verifyAdminPassword(inputPassword: string): boolean {
-  const configuredPassword = process.env.DOCFLOW_PASSWORD || 'admin@xuan_son_2025';
+  const configuredPassword = process.env.DOCFLOW_PASSWORD || 'PCTBCHQS';
   if (!inputPassword) return false;
   
-  // So sánh chuỗi an toàn
-  if (inputPassword.length !== configuredPassword.length) {
-    return false;
-  }
-  let result = 0;
-  for (let i = 0; i < inputPassword.length; i++) {
-    result |= inputPassword.charCodeAt(i) ^ configuredPassword.charCodeAt(i);
-  }
-  return result === 0;
+  return timingSafeEqual(createHash('sha256').update(inputPassword).digest(), createHash('sha256').update(configuredPassword).digest());
 }
 
 export { SESSION_COOKIE_NAME };

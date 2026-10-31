@@ -56,7 +56,7 @@ export async function PUT(
     });
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, message: error?.message || 'Lỗi cập nhật' },
+      { success: false, message: 'Lỗi cập nhật' },
       { status: 500 }
     );
   }

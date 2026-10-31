@@ -5,6 +5,13 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function safeAttachmentUrl(value: string): string | undefined {
+  try {
+    const url = new URL(value);
+    return ['http:', 'https:'].includes(url.protocol) ? url.href : undefined;
+  } catch { return undefined; }
+}
+
 /**
  * Format date string (YYYY-MM-DD or ISO) to Vietnamese standard DD/MM/YYYY
  */

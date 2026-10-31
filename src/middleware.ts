@@ -1,23 +1,21 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { jwtVerify } from 'jose';
-
-const SESSION_COOKIE_NAME = 'docflow_session';
-const DEFAULT_SECRET = 'docflow_xuan_son_military_session_secret_key_2025_secure_random';
-
-async function verifyToken(token: string): Promise<boolean> {
-  try {
-    const secret = process.env.SESSION_SECRET || DEFAULT_SECRET;
-    const secretKey = new TextEncoder().encode(secret);
-    await jwtVerify(token, secretKey);
-    return true;
-  } catch {
-    return false;
-  }
-}
+import { SESSION_COOKIE_NAME, verifySessionToken } from './lib/session';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  if (pathname.startsWith('/api/') && !['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
+    const origin = request.headers.get('origin');
+    if (request.headers.get('sec-fetch-site') === 'cross-site' || (origin && origin !== request.nextUrl.origin)) {
+      return NextResponse.json({ success: false, message: 'Nguồn yêu cầu không hợp lệ' }, { status: 403 });
+    }
+    if (['POST', 'PUT', 'PATCH'].includes(request.method) && request.headers.get('content-type')?.split(';')[0].trim() !== 'application/json') {
+      return NextResponse.json({ success: false, message: 'Yêu cầu dữ liệu JSON' }, { status: 415 });
+    }
+    if (Number(request.headers.get('content-length') || 0) > 65536) {
+      return NextResponse.json({ success: false, message: 'Dữ liệu quá lớn' }, { status: 413 });
+    }
+  }
 
   // Bỏ qua các file tĩnh, favicon, hình ảnh
   if (
@@ -31,7 +29,7 @@ export async function middleware(request: NextRequest) {
 
   const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME);
   const token = sessionCookie?.value;
-  const isAuthenticated = token ? await verifyToken(token) : false;
+  const isAuthenticated = token ? Boolean(await verifySessionToken(token)) : false;
 
   // Nếu đang vào trang đăng nhập mà đã có phiên hợp lệ -> chuyển vào dashboard
   if (pathname === '/login') {
@@ -61,7 +59,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Bảo vệ các API nghiệp vụ (trừ /api/auth/login)
-  if (pathname.startsWith('/api/') && !pathname.startsWith('/api/auth/login')) {
+  if (pathname.startsWith('/api/') && pathname !== '/api/auth/login') {
     if (!isAuthenticated) {
       return NextResponse.json(
         { success: false, message: 'Yêu cầu phiên đăng nhập hợp lệ' },

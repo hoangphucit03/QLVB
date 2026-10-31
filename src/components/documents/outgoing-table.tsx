@@ -14,7 +14,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { VanBanDi } from '@/lib/types';
-import { formatDateVN, getStatusBadgeClass } from '@/lib/utils';
+import { safeAttachmentUrl, formatDateVN, getStatusBadgeClass } from '@/lib/utils';
 
 interface OutgoingTableProps {
   documents: VanBanDi[];
@@ -208,7 +208,7 @@ export function OutgoingTable({
                     >
                       {/* Số đi */}
                       <td className="py-3 px-3.5 text-center font-bold text-indigo-900 bg-slate-50/50">
-                        {doc.so_di}
+                        {doc.so_di || '—'}
                       </td>
 
                       {/* Ngày phát hành */}
@@ -218,7 +218,7 @@ export function OutgoingTable({
 
                       {/* Số, ký hiệu */}
                       <td className="py-3 px-3.5 font-semibold text-slate-800">
-                        {doc.so_ky_hieu}
+                        {doc.so_ky_hieu || 'Chưa cấp số, ký hiệu'}
                       </td>
 
                       {/* Ngày ký */}
@@ -239,9 +239,6 @@ export function OutgoingTable({
                           title={doc.trich_yeu}
                         >
                           {doc.trich_yeu}
-                        </div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">
-                          Đv soạn: {doc.don_vi_soan_thao}
                         </div>
                       </td>
 
@@ -271,7 +268,7 @@ export function OutgoingTable({
                       <td className="py-3 px-3.5 text-center whitespace-nowrap">
                         {doc.link_dinh_kem ? (
                           <a
-                            href={doc.link_dinh_kem}
+                            href={safeAttachmentUrl(doc.link_dinh_kem)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded inline-block transition-colors"

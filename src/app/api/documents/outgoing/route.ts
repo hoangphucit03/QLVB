@@ -15,9 +15,12 @@ export async function GET(request: Request) {
   const loaiVanBan = searchParams.get('loai_van_ban');
   const trangThai = searchParams.get('trang_thai');
   const donViSoanThao = searchParams.get('don_vi_soan_thao');
-  const page = parseInt(searchParams.get('page') || '1', 10);
-  const limit = parseInt(searchParams.get('limit') || '25', 10);
+  const page = Number(searchParams.get('page') || '1');
+  const limit = Number(searchParams.get('limit') || '25');
 
+  if (!Number.isInteger(page) || page < 1 || !Number.isInteger(limit) || limit < 1 || limit > 1000) {
+    return NextResponse.json({ success: false, message: 'Phân trang không hợp lệ (limit 1–1000)' }, { status: 400 });
+  }
   const { data: rawList, isDemo } = await getVanBanDiList();
 
   let filtered = rawList;
@@ -100,7 +103,7 @@ export async function POST(request: Request) {
     });
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, message: error?.message || 'Lỗi xử lý yêu cầu' },
+      { success: false, message: 'Lỗi xử lý yêu cầu' },
       { status: 500 }
     );
   }

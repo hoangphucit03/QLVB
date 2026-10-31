@@ -18,7 +18,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { VanBanDen } from '@/lib/types';
-import { formatDateVN, getPriorityBadgeClass, getStatusBadgeClass, getDeadlineStatus } from '@/lib/utils';
+import { safeAttachmentUrl, formatDateVN, getPriorityBadgeClass, getStatusBadgeClass, getDeadlineStatus } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
 interface IncomingTableProps {
@@ -301,7 +301,7 @@ export function IncomingTable({
                       <td className="py-3 px-3.5 text-center whitespace-nowrap">
                         {doc.link_dinh_kem ? (
                           <a
-                            href={doc.link_dinh_kem}
+                            href={safeAttachmentUrl(doc.link_dinh_kem)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded inline-block transition-colors"

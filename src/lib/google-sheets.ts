@@ -1,3 +1,4 @@
+import { calculateStatistics } from './statistics';
 ﻿import { google } from 'googleapis';
 import {
   VanBanDen,
@@ -30,6 +31,9 @@ const SYSTEM_ID = process.env.DOCFLOW_SYSTEM_ID || '1tDAYBobgTBcCg61H0LieZvTbk-M
  * Kiểm tra xem cấu hình Google Service Account đã được cung cấp chưa
  */
 export function isGoogleCredentialsConfigured(): boolean {
+  if (Boolean(process.env.GOOGLE_CLIENT_EMAIL?.trim()) !== Boolean(process.env.GOOGLE_PRIVATE_KEY?.trim())) {
+    throw new Error('Cần cấu hình đầy đủ email và private key của Service Account.');
+  }
   return !!(
     process.env.GOOGLE_CLIENT_EMAIL &&
     process.env.GOOGLE_PRIVATE_KEY &&
@@ -147,8 +151,8 @@ export async function getVanBanDenList(): Promise<{ data: VanBanDen[]; isDemo: b
 
     return { data: list, isDemo: false };
   } catch (error) {
-    console.warn('[DocFlow Sheets API] Lỗi kết nối Google Sheets, chuyển sang chế độ Demo:', error);
-    return { data: inMemoryVanBanDen, isDemo: true };
+    console.warn('Google Sheets request failed');
+    throw new Error('Không thể đọc Google Sheets. Vui lòng thử lại; dữ liệu chưa được lưu vào chế độ demo.');
   }
 }
 
@@ -193,7 +197,7 @@ export async function addVanBanDen(
     await sheets.spreadsheets.values.append({
       spreadsheetId: DATABASE_ID,
       range: 'VAN_BAN_DEN!A2:U',
-      valueInputOption: 'USER_ENTERED',
+      valueInputOption: 'RAW',
       insertDataOption: 'INSERT_ROWS',
       requestBody: {
         values: [rowValues],
@@ -202,10 +206,10 @@ export async function addVanBanDen(
 
     return { success: true, data: newDoc };
   } catch (error: any) {
-    console.error('[DocFlow Sheets API] Lỗi khi thêm văn bản đến:', error);
+    console.error('Google Sheets request failed');
     return {
       success: false,
-      message: error?.message || 'Không thể ghi dữ liệu vào Google Sheets. Vui lòng kiểm tra quyền chia sẻ.',
+      message: 'Không thể ghi dữ liệu vào Google Sheets. Vui lòng kiểm tra quyền chia sẻ.',
     };
   }
 }
@@ -283,7 +287,7 @@ export async function updateVanBanDen(
     await sheets.spreadsheets.values.update({
       spreadsheetId: DATABASE_ID,
       range: `VAN_BAN_DEN!A${targetRowIndex}:U${targetRowIndex}`,
-      valueInputOption: 'USER_ENTERED',
+      valueInputOption: 'RAW',
       requestBody: {
         values: [rowValues],
       },
@@ -291,8 +295,8 @@ export async function updateVanBanDen(
 
     return { success: true, data: updatedDoc };
   } catch (error: any) {
-    console.error('[DocFlow Sheets API] Lỗi khi cập nhật văn bản đến:', error);
-    return { success: false, message: error?.message || 'Lỗi khi cập nhật Google Sheets.' };
+    console.error('Google Sheets request failed');
+    return { success: false, message: 'Lỗi khi cập nhật Google Sheets.' };
   }
 }
 
@@ -323,9 +327,7 @@ export async function deleteVanBanDen(id: string): Promise<{ success: boolean; m
     }
 
     if (targetRowIndex === -1) {
-      // Nếu không tìm thấy trên sheets, xóa trong bộ nhớ tạm nếu có
-      inMemoryVanBanDen = inMemoryVanBanDen.filter((d) => d.id !== id);
-      return { success: true };
+      return { success: false, message: 'Không tìm thấy văn bản trên Google Sheets.' };
     }
 
     // Xóa nội dung dòng bằng clear để an toàn tuyệt đối
@@ -336,9 +338,8 @@ export async function deleteVanBanDen(id: string): Promise<{ success: boolean; m
 
     return { success: true };
   } catch (error: any) {
-    console.error('[DocFlow Sheets API] Lỗi khi xóa văn bản đến:', error);
-    inMemoryVanBanDen = inMemoryVanBanDen.filter((d) => d.id !== id);
-    return { success: true };
+    console.error('Google Sheets request failed');
+    return { success: false, message: 'Không thể xóa trên Google Sheets. Vui lòng thử lại.' };
   }
 }
 
@@ -373,7 +374,7 @@ function vanBanDiToRow(doc: VanBanDi): any[] {
   return [
     doc.id,
     doc.nam,
-    doc.so_di,
+    doc.so_di || '',
     doc.ngay_phat_hanh,
     doc.so_ky_hieu,
     doc.ngay_ky,
@@ -411,8 +412,8 @@ export async function getVanBanDiList(): Promise<{ data: VanBanDi[]; isDemo: boo
 
     return { data: list, isDemo: false };
   } catch (error) {
-    console.warn('[DocFlow Sheets API] Lỗi kết nối Google Sheets (VAN_BAN_DI), chuyển sang chế độ Demo:', error);
-    return { data: inMemoryVanBanDi, isDemo: true };
+    console.warn('Google Sheets request failed');
+    throw new Error('Không thể đọc Google Sheets. Vui lòng thử lại; dữ liệu chưa được lưu vào chế độ demo.');
   }
 }
 
@@ -424,7 +425,7 @@ export async function addVanBanDi(
 
   // Kiểm tra trùng số đi trong cùng một năm
   const isDuplicate = list.some(
-    (item) => Number(item.nam) === Number(docData.nam) && Number(item.so_di) === Number(docData.so_di)
+    (item) => Number(docData.so_di) > 0 && Number(item.nam) === Number(docData.nam) && Number(item.so_di) === Number(docData.so_di)
   );
 
   if (isDuplicate) {
@@ -454,7 +455,7 @@ export async function addVanBanDi(
     await sheets.spreadsheets.values.append({
       spreadsheetId: DATABASE_ID,
       range: 'VAN_BAN_DI!A2:R',
-      valueInputOption: 'USER_ENTERED',
+      valueInputOption: 'RAW',
       insertDataOption: 'INSERT_ROWS',
       requestBody: {
         values: [rowValues],
@@ -463,10 +464,10 @@ export async function addVanBanDi(
 
     return { success: true, data: newDoc };
   } catch (error: any) {
-    console.error('[DocFlow Sheets API] Lỗi khi thêm văn bản đi:', error);
+    console.error('Google Sheets request failed');
     return {
       success: false,
-      message: error?.message || 'Không thể ghi dữ liệu vào Google Sheets.',
+      message: 'Không thể ghi dữ liệu vào Google Sheets.',
     };
   }
 }
@@ -489,7 +490,7 @@ export async function updateVanBanDi(
   const targetSoDi = docData.so_di !== undefined ? Number(docData.so_di) : Number(existing.so_di);
 
   const isDuplicate = list.some(
-    (item) => item.id !== id && Number(item.nam) === targetNam && Number(item.so_di) === targetSoDi
+    (item) => targetSoDi > 0 && item.id !== id && Number(item.nam) === targetNam && Number(item.so_di) === targetSoDi
   );
 
   if (isDuplicate) {
@@ -539,7 +540,7 @@ export async function updateVanBanDi(
     await sheets.spreadsheets.values.update({
       spreadsheetId: DATABASE_ID,
       range: `VAN_BAN_DI!A${targetRowIndex}:R${targetRowIndex}`,
-      valueInputOption: 'USER_ENTERED',
+      valueInputOption: 'RAW',
       requestBody: {
         values: [rowValues],
       },
@@ -547,8 +548,8 @@ export async function updateVanBanDi(
 
     return { success: true, data: updatedDoc };
   } catch (error: any) {
-    console.error('[DocFlow Sheets API] Lỗi khi cập nhật văn bản đi:', error);
-    return { success: false, message: error?.message || 'Lỗi khi cập nhật Google Sheets.' };
+    console.error('Google Sheets request failed');
+    return { success: false, message: 'Lỗi khi cập nhật Google Sheets.' };
   }
 }
 
@@ -587,9 +588,8 @@ export async function deleteVanBanDi(id: string): Promise<{ success: boolean; me
 
     return { success: true };
   } catch (error: any) {
-    console.error('[DocFlow Sheets API] Lỗi khi xóa văn bản đi:', error);
-    inMemoryVanBanDi = inMemoryVanBanDi.filter((d) => d.id !== id);
-    return { success: true };
+    console.error('Google Sheets request failed');
+    return { success: false, message: 'Không thể xóa trên Google Sheets. Vui lòng thử lại.' };
   }
 }
 
@@ -619,10 +619,10 @@ export async function getDanhMucList(): Promise<{ data: DanhMucItem[]; isDemo: b
         ghi_chu: String(r[3] || ''),
       }));
 
-    return { data: list.length > 0 ? list : inMemoryDanhMuc, isDemo: false };
+    return { data: list, isDemo: false };
   } catch (error) {
-    console.warn('[DocFlow Sheets API] Lỗi đọc DANH_MUC, dùng dữ liệu dự phòng:', error);
-    return { data: inMemoryDanhMuc, isDemo: true };
+    console.warn('Google Sheets request failed');
+    throw new Error('Không thể đọc Google Sheets. Vui lòng thử lại; dữ liệu chưa được lưu vào chế độ demo.');
   }
 }
 
@@ -671,7 +671,7 @@ export async function updateDanhMucItem(
     await sheets.spreadsheets.values.update({
       spreadsheetId: SYSTEM_ID,
       range: `DANH_MUC!A${rowIndex + 2}:D${rowIndex + 2}`,
-      valueInputOption: 'USER_ENTERED',
+      valueInputOption: 'RAW',
       requestBody: {
         values: [[updates.nhom_danh_muc, updates.ma, updates.ten_gia_tri, updates.ghi_chu]],
       },
@@ -679,10 +679,10 @@ export async function updateDanhMucItem(
 
     return { success: true, data: updates };
   } catch (error: any) {
-    console.error('[DocFlow Sheets API] Lỗi cập nhật DANH_MUC:', error);
+    console.error('Google Sheets request failed');
     return {
       success: false,
-      message: error?.message || 'Không thể cập nhật danh mục trên Google Sheets.',
+      message: 'Không thể cập nhật danh mục trên Google Sheets.',
     };
   }
 }
@@ -708,9 +708,9 @@ export async function getThongKeSystemList(): Promise<{ data: ThongKeItem[]; isD
         ghi_chu: String(r[2] || ''),
       }));
 
-    return { data: list.length > 0 ? list : inMemoryThongKe, isDemo: false };
+    return { data: list, isDemo: false };
   } catch {
-    return { data: inMemoryThongKe, isDemo: true };
+    throw new Error('Không thể đọc Google Sheets. Vui lòng thử lại; dữ liệu chưa được lưu vào chế độ demo.');
   }
 }
 
@@ -735,9 +735,9 @@ export async function getCauHinhList(): Promise<{ data: CauHinhItem[]; isDemo: b
         ghi_chu: String(r[2] || ''),
       }));
 
-    return { data: list.length > 0 ? list : inMemoryCauHinh, isDemo: false };
+    return { data: list, isDemo: false };
   } catch {
-    return { data: inMemoryCauHinh, isDemo: true };
+    throw new Error('Không thể đọc Google Sheets. Vui lòng thử lại; dữ liệu chưa được lưu vào chế độ demo.');
   }
 }
 
@@ -745,88 +745,9 @@ export async function getCauHinhList(): Promise<{ data: CauHinhItem[]; isDemo: b
 // 4. TÍNH TOÁN THỐNG KÊ DASHBOARD
 // ==============================================================================
 
-export async function getDashboardData(selectedYear?: number): Promise<{
-  stats: DashboardStats;
-  isDemo: boolean;
-}> {
+export async function getDashboardData(selectedYear?: number) {
   const [denRes, diRes] = await Promise.all([getVanBanDenList(), getVanBanDiList()]);
-  const isDemo = denRes.isDemo || diRes.isDemo;
-
-  let denList = denRes.data;
-  let diList = diRes.data;
-
-  if (selectedYear) {
-    denList = denList.filter((d) => Number(d.nam) === Number(selectedYear));
-    diList = diList.filter((d) => Number(d.nam) === Number(selectedYear));
-  }
-
-  let chuaXuLy = 0;
-  let dangXuLy = 0;
-  let daHoanThanh = 0;
-  let quaHan = 0;
-  let canXuLyGap = 0;
-
-  const todayStr = new Date().toISOString().split('T')[0];
-
-  denList.forEach((d) => {
-    if (d.trang_thai === 'Đã hoàn thành') {
-      daHoanThanh++;
-    } else if (d.trang_thai === 'Đang xử lý') {
-      dangXuLy++;
-    } else if (d.trang_thai === 'Quá hạn') {
-      quaHan++;
-    } else {
-      chuaXuLy++;
-    }
-
-    // Kiểm tra quá hạn hoặc hạn gần nếu chưa hoàn thành
-    if (d.trang_thai !== 'Đã hoàn thành' && d.han_xu_ly) {
-      if (d.han_xu_ly < todayStr) {
-        // Quá hạn
-      } else if (d.muc_do_uu_tien === 'Khẩn' || d.muc_do_uu_tien === 'Hỏa tốc' || d.muc_do_uu_tien === 'Thượng khẩn') {
-        canXuLyGap++;
-      }
-    }
-  });
-
-  // Thống kê 12 tháng
-  const monthlyStats = Array.from({ length: 12 }, (_, i) => {
-    const month = i + 1;
-    const monthStr = String(month).padStart(2, '0');
-
-    const countDen = denList.filter((d) => {
-      const dMonth = (d.ngay_den || '').split('-')[1];
-      return dMonth === monthStr;
-    }).length;
-
-    const countDi = diList.filter((d) => {
-      const dMonth = (d.ngay_phat_hanh || '').split('-')[1];
-      return dMonth === monthStr;
-    }).length;
-
-    return {
-      thang: month,
-      ten_thang: `T${month}`,
-      van_ban_den: countDen,
-      van_ban_di: countDi,
-    };
-  });
-
-  return {
-    stats: {
-      tong_den: denList.length,
-      tong_di: diList.length,
-      chua_xu_ly: chuaXuLy,
-      dang_xu_ly: dangXuLy,
-      da_hoan_thanh: daHoanThanh,
-      qua_han: quaHan,
-      can_xu_ly_gap: canXuLyGap,
-      thong_ke_thang: monthlyStats,
-      van_ban_den_moi_nhat: denList.slice(0, 5),
-      van_ban_di_moi_nhat: diList.slice(0, 5),
-    },
-    isDemo,
-  };
+  return { ...calculateStatistics(denRes.data, diRes.data, selectedYear), isDemo: denRes.isDemo || diRes.isDemo };
 }
 
 // ==============================================================================
@@ -877,7 +798,7 @@ export async function testGoogleConnection(): Promise<{
     });
     sysOk = true;
   } catch (err: any) {
-    errMsg = err?.message || 'Lỗi khi gọi Google Sheets API';
+    errMsg = 'Không thể kết nối Google Sheets. Kiểm tra API và quyền chia sẻ.';
   }
 
   return {

@@ -10,13 +10,21 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const yearParam = searchParams.get('nam');
-  const selectedYear = yearParam && yearParam !== 'all' ? parseInt(yearParam, 10) : undefined;
+  if (yearParam && yearParam !== 'all' && (!/^\d{4}$/.test(yearParam) || Number(yearParam) < 2000 || Number(yearParam) > 2099)) {
+    return NextResponse.json({ success: false, message: 'Năm không hợp lệ' }, { status: 400 });
+  }
+  const selectedYear = yearParam && yearParam !== 'all' ? Number(yearParam) : undefined;
 
+  try {
   const result = await getDashboardData(selectedYear);
 
   return NextResponse.json({
     success: true,
     data: result.stats,
     isDemo: result.isDemo,
+    breakdown: result.breakdown,
   });
+  } catch {
+    return NextResponse.json({ success: false, message: 'Không thể tải thống kê từ Google Sheets. Vui lòng thử lại.' }, { status: 503 });
+  }
 }

@@ -36,7 +36,10 @@ export async function PUT(
 
   try {
     const body = await request.json();
-    const parseResult = vanBanDiSchema.partial().safeParse(body);
+    const { data: list } = await getVanBanDiList();
+    const existing = list.find((doc) => doc.id === id);
+    if (!existing) return NextResponse.json({ success: false, message: 'Không tìm thấy văn bản' }, { status: 404 });
+    const parseResult = vanBanDiSchema.safeParse({ ...existing, ...body });
 
     if (!parseResult.success) {
       const errorMsg = parseResult.error.issues.map((i) => i.message).join('; ');
@@ -56,7 +59,7 @@ export async function PUT(
     });
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, message: error?.message || 'Lỗi cập nhật' },
+      { success: false, message: 'Lỗi cập nhật' },
       { status: 500 }
     );
   }

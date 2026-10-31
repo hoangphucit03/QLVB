@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { Modal } from '@/components/ui/modal';
 import { VanBanDen } from '@/lib/types';
-import { formatDateVN, getPriorityBadgeClass, getStatusBadgeClass } from '@/lib/utils';
+import { safeAttachmentUrl, formatDateVN, getPriorityBadgeClass, getStatusBadgeClass } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
 interface IncomingDetailModalProps {
@@ -127,15 +127,7 @@ export function IncomingDetailModal({
               Chỉ huy & Thực hiện
             </h4>
 
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-500 flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-slate-400" />
-                Lãnh đạo chỉ đạo:
-              </span>
-              <span className="font-semibold text-slate-800">
-                {document.lanh_dao_chi_dao || 'Chưa chỉ đạo'}
-              </span>
-            </div>
+
 
             <div className="flex items-center justify-between text-xs">
               <span className="text-slate-500 flex items-center gap-1.5">
@@ -190,7 +182,7 @@ export function IncomingDetailModal({
             <span className="font-semibold text-slate-700 block">Tệp tài liệu đính kèm:</span>
             {document.link_dinh_kem ? (
               <a
-                href={document.link_dinh_kem}
+                href={safeAttachmentUrl(document.link_dinh_kem)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 font-semibold underline truncate max-w-md"

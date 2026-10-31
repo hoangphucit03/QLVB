@@ -3,12 +3,13 @@
 import React, { useState, Suspense } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Lock, ArrowRight, AlertCircle, KeyRound, CheckCircle2 } from 'lucide-react';
+import { Lock, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectPath = searchParams.get('redirect') || '/dashboard';
+  const requestedPath = searchParams.get('redirect') || '';
+  const redirectPath = ['/dashboard', '/van-ban-den', '/van-ban-di', '/thong-ke', '/danh-muc', '/cai-dat'].includes(requestedPath) ? requestedPath : '/dashboard';
 
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -99,7 +100,7 @@ function LoginForm() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Mật khẩu hệ thống (DOCFLOW_PASSWORD)
+                Mật khẩu hệ thống
               </label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
@@ -136,16 +137,6 @@ function LoginForm() {
             </button>
           </form>
 
-          {/* Quick Demo Credentials Info for Local Development */}
-          <div className="mt-6 pt-4 border-t border-slate-100 bg-slate-50/80 -mx-6 -mb-6 p-4 rounded-b-2xl">
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 mb-1">
-              <KeyRound className="w-3.5 h-3.5 text-blue-600" />
-              <span>Ghi chú quản trị mặc định:</span>
-            </div>
-            <p className="text-[11px] text-slate-500 leading-relaxed">
-              Mật khẩu mẫu định cấu hình trong <code className="bg-white px-1 py-0.5 rounded border border-slate-200 text-slate-700 font-mono text-[10px]">.env.local</code>: <strong className="text-blue-700">admin@xuan_son_2025</strong>
-            </p>
-          </div>
         </div>
 
         {/* Security badge footer */}

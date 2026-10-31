@@ -28,17 +28,17 @@ export function OutgoingModal({
 }: OutgoingModalProps) {
   const [formData, setFormData] = useState({
     nam: 2025,
-    so_di: 1,
+    so_di: 0,
     ngay_phat_hanh: '2025-01-01',
     so_ky_hieu: '',
     ngay_ky: '2025-01-01',
     loai_van_ban: 'Báo cáo',
     trich_yeu: '',
-    don_vi_soan_thao: 'Ban CHQS Xã Xuân Sơn',
-    nguoi_ky: 'Nguyễn Văn Tuấn',
-    chuc_vu_nguoi_ky: 'Chỉ huy trưởng',
+    don_vi_soan_thao: 'Phòng Chính trị',
+    nguoi_ky: 'Vũ Đức Hướng',
+    chuc_vu_nguoi_ky: 'Chính trị viên',
     noi_nhan: 'Ban CHQS Huyện',
-    hinh_thuc_gui: 'Trục liên thông văn bản',
+    hinh_thuc_gui: 'Trực tiếp',
     trang_thai: 'Đã phát hành',
     link_dinh_kem: '',
     ghi_chu: '',
@@ -55,13 +55,13 @@ export function OutgoingModal({
     if (initialData) {
       setFormData({
         nam: initialData.nam || currentYear,
-        so_di: initialData.so_di || 1,
+        so_di: initialData.so_di || 0,
         ngay_phat_hanh: initialData.ngay_phat_hanh || todayStr,
         so_ky_hieu: initialData.so_ky_hieu || '',
         ngay_ky: initialData.ngay_ky || todayStr,
         loai_van_ban: initialData.loai_van_ban || 'Báo cáo',
         trich_yeu: initialData.trich_yeu || '',
-        don_vi_soan_thao: initialData.don_vi_soan_thao || 'Ban CHQS Xã Xuân Sơn',
+        don_vi_soan_thao: initialData.don_vi_soan_thao || 'Phòng Chính trị',
         nguoi_ky: initialData.nguoi_ky || '',
         chuc_vu_nguoi_ky: initialData.chuc_vu_nguoi_ky || '',
         noi_nhan: initialData.noi_nhan || '',
@@ -73,17 +73,17 @@ export function OutgoingModal({
     } else {
       setFormData({
         nam: currentYear,
-        so_di: 1,
+        so_di: 0,
         ngay_phat_hanh: todayStr,
         so_ky_hieu: '',
         ngay_ky: todayStr,
         loai_van_ban: 'Báo cáo',
         trich_yeu: '',
-        don_vi_soan_thao: 'Ban CHQS Xã Xuân Sơn',
-        nguoi_ky: 'Nguyễn Văn Tuấn',
-        chuc_vu_nguoi_ky: 'Chỉ huy trưởng',
+        don_vi_soan_thao: 'Phòng Chính trị',
+        nguoi_ky: 'Vũ Đức Hướng',
+        chuc_vu_nguoi_ky: 'Chính trị viên',
         noi_nhan: 'Ban CHQS Huyện',
-        hinh_thuc_gui: 'Trục liên thông văn bản',
+        hinh_thuc_gui: 'Trực tiếp',
         trang_thai: 'Đã phát hành',
         link_dinh_kem: '',
         ghi_chu: '',
@@ -99,13 +99,13 @@ export function OutgoingModal({
     if (!formData.nam || formData.nam < 2000 || formData.nam > 2099) {
       newErrors.nam = 'Năm không hợp lệ';
     }
-    if (!formData.so_di || Number(formData.so_di) <= 0) {
+    if (formData.trang_thai === 'Đã phát hành' && (!formData.so_di || Number(formData.so_di) <= 0)) {
       newErrors.so_di = 'Số đi phải là số nguyên dương lớn hơn 0';
     }
     if (!formData.ngay_phat_hanh) {
       newErrors.ngay_phat_hanh = 'Vui lòng chọn ngày phát hành';
     }
-    if (!formData.so_ky_hieu.trim()) {
+    if (formData.trang_thai === 'Đã phát hành' && !formData.so_ky_hieu.trim()) {
       newErrors.so_ky_hieu = 'Vui lòng nhập số, ký hiệu văn bản đi';
     }
     if (!formData.ngay_ky) {
@@ -117,9 +117,6 @@ export function OutgoingModal({
     if (!formData.trich_yeu.trim() || formData.trich_yeu.trim().length < 3) {
       newErrors.trich_yeu = 'Trích yếu nội dung phải có ít nhất 3 ký tự';
     }
-    if (!formData.don_vi_soan_thao.trim()) {
-      newErrors.don_vi_soan_thao = 'Vui lòng nhập đơn vị soạn thảo';
-    }
     if (!formData.nguoi_ky.trim()) {
       newErrors.nguoi_ky = 'Vui lòng nhập người ký duyệt';
     }
@@ -128,7 +125,8 @@ export function OutgoingModal({
     }
     if (formData.link_dinh_kem.trim()) {
       try {
-        new URL(formData.link_dinh_kem.trim());
+        const url = new URL(formData.link_dinh_kem.trim());
+        if (!['http:', 'https:'].includes(url.protocol)) throw new Error('Invalid protocol');
       } catch {
         newErrors.link_dinh_kem = 'Đường dẫn tệp phải là URL hợp lệ';
       }
@@ -209,13 +207,13 @@ export function OutgoingModal({
             {/* Số đi (nhập thủ công) */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Số đi <span className="text-rose-500">*</span>
+                Số đi {formData.trang_thai === 'Đã phát hành' ? <span className="text-rose-500">*</span> : '(không bắt buộc)'}
               </label>
               <input
                 type="number"
                 min="1"
-                value={formData.so_di}
-                onChange={(e) => setFormData({ ...formData, so_di: parseInt(e.target.value, 10) || 1 })}
+                value={formData.so_di || ''}
+                onChange={(e) => setFormData({ ...formData, so_di: parseInt(e.target.value, 10) || 0 })}
                 placeholder="VD: 10"
                 className="w-full text-xs px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold text-blue-900"
               />
@@ -257,7 +255,7 @@ export function OutgoingModal({
             {/* Số, ký hiệu */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Số, ký hiệu văn bản <span className="text-rose-500">*</span>
+                Số, ký hiệu văn bản {formData.trang_thai === 'Đã phát hành' ? <span className="text-rose-500">*</span> : '(không bắt buộc)'}
               </label>
               <input
                 type="text"
@@ -304,32 +302,10 @@ export function OutgoingModal({
         <div className="p-4 bg-slate-50/70 rounded-xl border border-slate-200">
           <div className="text-xs font-bold uppercase tracking-wider text-blue-900 mb-3 flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-blue-600" />
-            2. Đơn vị soạn thảo, Người ký & Nơi nhận
+            2. Người ký & Nơi nhận
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Đơn vị soạn thảo */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Đơn vị soạn thảo <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="text"
-                list="don-vi-list"
-                value={formData.don_vi_soan_thao}
-                onChange={(e) => setFormData({ ...formData, don_vi_soan_thao: e.target.value })}
-                placeholder="VD: Ban CHQS Xã Xuân Sơn"
-                className="w-full text-xs px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-              />
-              <datalist id="don-vi-list">
-                <option value="Ban CHQS Xã Xuân Sơn" />
-                <option value="Bộ phận Tác huấn" />
-                <option value="Bộ phận Quân lực" />
-                <option value="Bộ phận Chính trị" />
-              </datalist>
-              {errors.don_vi_soan_thao && <p className="text-[11px] text-rose-600 mt-0.5">{errors.don_vi_soan_thao}</p>}
-            </div>
-
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Người ký */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -339,7 +315,7 @@ export function OutgoingModal({
                 type="text"
                 value={formData.nguoi_ky}
                 onChange={(e) => setFormData({ ...formData, nguoi_ky: e.target.value })}
-                placeholder="VD: Nguyễn Văn Tuấn"
+                placeholder="Vũ Đức Hướng"
                 className="w-full text-xs px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
               />
               {errors.nguoi_ky && <p className="text-[11px] text-rose-600 mt-0.5">{errors.nguoi_ky}</p>}
@@ -355,7 +331,7 @@ export function OutgoingModal({
                 list="chuc-vu-list"
                 value={formData.chuc_vu_nguoi_ky}
                 onChange={(e) => setFormData({ ...formData, chuc_vu_nguoi_ky: e.target.value })}
-                placeholder="VD: Chỉ huy trưởng"
+                placeholder="Chính trị viên"
                 className="w-full text-xs px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               />
               <datalist id="chuc-vu-list">
@@ -393,9 +369,12 @@ export function OutgoingModal({
                 className="w-full text-xs px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               >
                 <option value="Trực tiếp">Trực tiếp</option>
-                <option value="Trục liên thông văn bản">Trục liên thông văn bản</option>
-                <option value="Email công vụ">Email công vụ</option>
-                <option value="Bưu điện">Bưu điện</option>
+                <option value="Đường truyền">Đường truyền</option>
+                <option value="Khác">Khác</option>
+                <option value="Nội bộ">Nội bộ</option>
+                {initialData?.hinh_thuc_gui && !['Trực tiếp', 'Đường truyền', 'Khác', 'Nội bộ'].includes(initialData.hinh_thuc_gui) && (
+                  <option value={initialData.hinh_thuc_gui}>{initialData.hinh_thuc_gui}</option>
+                )}
               </select>
             </div>
           </div>
@@ -479,7 +458,7 @@ export function OutgoingModal({
             ) : (
               <>
                 <Save className="w-4 h-4" />
-                <span>{initialData ? 'Cập nhật văn bản đi' : 'Lưu và phát hành'}</span>
+                <span>{initialData ? 'Cập nhật văn bản đi' : (formData.trang_thai === 'Đã phát hành' ? 'Lưu và phát hành' : 'Lưu văn bản')}</span>
               </>
             )}
           </button>

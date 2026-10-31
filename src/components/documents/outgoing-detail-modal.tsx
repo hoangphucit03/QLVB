@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { Modal } from '@/components/ui/modal';
 import { VanBanDi } from '@/lib/types';
-import { formatDateVN, getStatusBadgeClass } from '@/lib/utils';
+import { safeAttachmentUrl, formatDateVN, getStatusBadgeClass } from '@/lib/utils';
 
 interface OutgoingDetailModalProps {
   isOpen: boolean;
@@ -47,7 +47,7 @@ export function OutgoingDetailModal({
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-md bg-indigo-600 text-white font-bold text-xs shadow-xs">
-                Số đi: {document.so_di} / {document.nam}
+                Số đi: {document.so_di || 'Chưa cấp'} / {document.nam}
               </span>
               <span className="font-bold text-slate-800 text-sm">
                 Số, Ký hiệu: {document.so_ky_hieu}
@@ -83,15 +83,7 @@ export function OutgoingDetailModal({
               Soạn thảo & Ban hành
             </h4>
 
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-500 flex items-center gap-1.5">
-                <Building className="w-3.5 h-3.5 text-slate-400" />
-                Đơn vị soạn thảo:
-              </span>
-              <span className="font-semibold text-slate-800">{document.don_vi_soan_thao}</span>
-            </div>
-
-            <div className="flex items-center justify-between text-xs">
+<div className="flex items-center justify-between text-xs">
               <span className="text-slate-500 flex items-center gap-1.5">
                 <User className="w-3.5 h-3.5 text-slate-400" />
                 Người ký duyệt:
@@ -148,7 +140,7 @@ export function OutgoingDetailModal({
             <span className="font-semibold text-slate-700 block">Tệp tài liệu đính kèm:</span>
             {document.link_dinh_kem ? (
               <a
-                href={document.link_dinh_kem}
+                href={safeAttachmentUrl(document.link_dinh_kem)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 font-semibold underline truncate max-w-md"

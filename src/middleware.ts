@@ -59,7 +59,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Bảo vệ các API nghiệp vụ (trừ /api/auth/login)
-  if (pathname.startsWith('/api/') && pathname !== '/api/auth/login') {
+  if (pathname.startsWith('/api/') && pathname !== '/api/auth/login' && pathname !== '/api/auth/logout') {
     if (!isAuthenticated) {
       return NextResponse.json(
         { success: false, message: 'Yêu cầu phiên đăng nhập hợp lệ' },

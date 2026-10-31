@@ -16,6 +16,20 @@ function load(file, mocks = {}) {
   new Function('require', 'module', 'exports', code)(localRequire, mod, mod.exports);
   return mod.exports;
 }
+test('Logout: JSON requests can clear expired sessions; cross-origin requests remain blocked', async () => {
+  const { NextRequest } = require('next/server');
+  const { middleware } = load('src/middleware.ts', {
+    './lib/session': { SESSION_COOKIE_NAME: 'docflow_session', verifySessionToken: async () => null },
+  });
+  const request = (path, headers = {}) => new NextRequest('http://localhost:3000' + path, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', Cookie: 'docflow_session=expired', ...headers }, body: '{}',
+  });
+  assert.equal((await middleware(request('/api/auth/logout'))).status, 200);
+  assert.equal((await middleware(request('/api/auth/logout', { Origin: 'https://untrusted.example' }))).status, 403);
+  assert.equal((await middleware(request('/api/documents/incoming'))).status, 401);
+  const nonJson = new NextRequest('http://localhost:3000/api/auth/logout', { method: 'POST' });
+  assert.equal((await middleware(nonJson)).status, 415);
+});
 test('Statistics: >1000 rows, overdue, urgency, completed, year and prototype keys', () => {
   const { calculateStatistics } = load('src/lib/statistics.ts');
   const base = { nam: 2026, ngay_den: '2026-10-31', ngay_tao: '2026-10-31', trang_thai: 'Chưa xử lý', han_xu_ly: '', muc_do_uu_tien: 'Thường', loai_van_ban: '__proto__', co_quan_gui: 'A', nguoi_xu_ly: '' };

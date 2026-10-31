@@ -26,11 +26,15 @@ export function Header({ onToggleSidebar }: HeaderProps) {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      router.push('/login');
-      router.refresh();
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      if (!response.ok) throw new Error('Logout failed');
+      window.location.replace('/login');
     } catch {
-      router.push('/login');
+      window.alert('Không thể đăng xuất. Vui lòng thử lại.');
     }
   };
 

@@ -5,6 +5,7 @@ import { Save, AlertCircle, Calendar, Link as LinkIcon, User } from 'lucide-reac
 import { Modal } from '@/components/ui/modal';
 import { VanBanDi } from '@/lib/types';
 import { getTodayDateString } from '@/lib/utils';
+import { useAgencySuggestions } from '@/lib/use-agency-suggestions';
 
 interface OutgoingModalProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ export function OutgoingModal({
   initialData,
   categories,
 }: OutgoingModalProps) {
+  const savedAgencies = useAgencySuggestions(isOpen);
   const [formData, setFormData] = useState({
     nam: 2025,
     so_di: 0,
@@ -348,11 +350,15 @@ export function OutgoingModal({
               <input
                 type="text"
                 value={formData.noi_nhan}
+                list="noi-nhan-list"
                 onChange={(e) => setFormData({ ...formData, noi_nhan: e.target.value })}
                 placeholder="VD: Ban CHQS Huyện, UBND Xã Xuân Sơn, Các thôn"
                 className="w-full text-xs px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               />
               {errors.noi_nhan && <p className="text-[11px] text-rose-600 mt-0.5">{errors.noi_nhan}</p>}
+              <datalist id="noi-nhan-list">
+                {savedAgencies.map(name => <option key={name} value={name} />)}
+              </datalist>
             </div>
 
             {/* Hình thức gửi */}

@@ -5,6 +5,7 @@ import { Save, AlertCircle, Calendar, Link as LinkIcon, User, Shield } from 'luc
 import { Modal } from '@/components/ui/modal';
 import { VanBanDen } from '@/lib/types';
 import { getTodayDateString } from '@/lib/utils';
+import { useAgencySuggestions } from '@/lib/use-agency-suggestions';
 
 interface IncomingModalProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ export function IncomingModal({
   initialData,
   categories,
 }: IncomingModalProps) {
+  const savedAgencies = useAgencySuggestions(isOpen);
   const [formData, setFormData] = useState({
     nam: 2025,
     so_den: 0,
@@ -333,7 +335,7 @@ export function IncomingModal({
                 className="flex-1 text-xs px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               />
               <datalist id="co-quan-list">
-                {defaultCoQuan.map((cq) => (
+                {Array.from(new Map([...defaultCoQuan, ...savedAgencies].map(name => [name.trim().toLocaleLowerCase('vi'), name.trim()])).values()).filter(Boolean).map((cq) => (
                   <option key={cq} value={cq} />
                 ))}
               </datalist>

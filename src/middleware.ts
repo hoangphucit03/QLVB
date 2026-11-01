@@ -49,7 +49,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Danh sách các trang nghiệp vụ cần đăng nhập
-  const protectedPages = ['/dashboard', '/van-ban-den', '/van-ban-di', '/thong-ke', '/danh-muc', '/cai-dat', '/chuyen-doi'];
+  const protectedPages = ['/dashboard', '/van-ban-den', '/van-ban-di', '/thong-ke', '/danh-muc', '/cai-dat', '/chuyen-doi', '/cong-cu-pdf'];
   const isProtectedPage = protectedPages.some((prefix) => pathname.startsWith(prefix));
 
   if (isProtectedPage && !isAuthenticated) {

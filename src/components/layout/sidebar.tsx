@@ -14,6 +14,8 @@ import {
   LogOut,
   X,
   ScanText,
+  Files,
+  ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -26,7 +28,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
 
   const navItems = [
-    { label: 'Chuyển đổi PDF / ảnh', href: '/chuyen-doi', icon: ScanText, description: 'OCR và xuất Word trên máy bạn' },
     {
       label: 'Tổng quan',
       href: '/dashboard',
@@ -178,6 +179,22 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               </Link>
             );
           })}
+          <details open={pathname === '/chuyen-doi' || pathname === '/cong-cu-pdf'} className="group/pdf pt-2 border-t border-slate-800 mt-3">
+            <summary className="flex cursor-pointer list-none items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white [&::-webkit-details-marker]:hidden">
+              <Files className="h-4.5 w-4.5 shrink-0 text-slate-400" />
+              <span className="flex-1">Công cụ PDF</span>
+              <ChevronDown className="h-4 w-4 transition-transform group-open/pdf:rotate-180" />
+            </summary>
+            <div className="ml-5 space-y-1 border-l border-slate-700 pl-2 pb-1">
+              {[
+                { href: '/chuyen-doi', label: 'Chuyển đổi PDF / ảnh', icon: ScanText },
+                { href: '/cong-cu-pdf', label: 'Chỉnh sửa PDF', icon: Files },
+              ].map(item => {
+                const Icon = item.icon;
+                return <Link key={item.href} href={item.href} onClick={onClose} aria-current={pathname === item.href ? 'page' : undefined} className={cn('flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-medium transition-colors', pathname === item.href ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white')}><Icon className="h-4 w-4 shrink-0" />{item.label}</Link>;
+              })}
+            </div>
+          </details>
         </div>
 
         {/* Database Link Info Card */}

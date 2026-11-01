@@ -13,6 +13,7 @@ import {
   Settings,
   LogOut,
   X,
+  ScanText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -25,6 +26,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
 
   const navItems = [
+    { label: 'Chuyển đổi PDF / ảnh', href: '/chuyen-doi', icon: ScanText, description: 'OCR và xuất Word trên máy bạn' },
     {
       label: 'Tổng quan',
       href: '/dashboard',

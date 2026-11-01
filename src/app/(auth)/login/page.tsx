@@ -9,7 +9,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedPath = searchParams.get('redirect') || '';
-  const redirectPath = ['/dashboard', '/van-ban-den', '/van-ban-di', '/thong-ke', '/danh-muc', '/cai-dat'].includes(requestedPath) ? requestedPath : '/dashboard';
+  const redirectPath = ['/dashboard', '/van-ban-den', '/van-ban-di', '/thong-ke', '/danh-muc', '/cai-dat', '/chuyen-doi'].includes(requestedPath) ? requestedPath : '/dashboard';
 
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
